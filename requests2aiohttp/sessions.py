@@ -53,25 +53,37 @@ class Response:
     """
     def __init__(self, context):
         self.context = context
-        self.will_raise_for_status = False
 
-    def raise_for_status(self):
-        self.will_raise_for_status = True
+    @property
+    async def response(self):
+        if not hasattr(self, '_response'):
+            self._response = await self.context
+        return self._response
+
+    async def raise_for_status(self):
+        resp = await self.response
+        resp.raise_for_status()
+
+    @property
+    async def status_code(self):
+        resp = await self.response
+        return resp.status
+
+    @property
+    async def text(self):
+        resp = await self.response
+        return await resp.text()
 
     async def _json(self):
-        async with self.context as resp:
-            if self.will_raise_for_status:
-                resp.raise_for_status()
-            return await resp.json()
+        resp = await self.response
+        return await resp.json()
 
     def json(self):
         return asyncio.ensure_future(self._json())
 
     async def _content(self):
-        async with self.context as resp:
-            if self.will_raise_for_status:
-                resp.raise_for_status()
-            return await resp.read()
+        resp = await self.response
+        return await resp.read()
 
     @property
     def content(self):
@@ -79,11 +91,11 @@ class Response:
 
     @property
     def raw(self):
-        return self.context
+        return self.response
 
     @asyncio.coroutine
     def __iter__(self):
-        return self.context
+        return self
 
     def close(self):
         self.context.close()
