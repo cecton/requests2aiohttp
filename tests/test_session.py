@@ -29,7 +29,8 @@ class SessionTestCase(AioHTTPTestCase):
         app = web.Application()
         app.router.add_route('*', '/', lambda x: web.Response(text=x.method))
         app.router.add_route('*', '/error', lambda x: web.Response(status=400))
-        app.router.add_route('*', '/json', lambda x: web.json_response(data={}))
+        app.router.add_route('*', '/json',
+                             lambda x: web.json_response(data={}))
         return app
 
     async def get_client(self, server):
@@ -76,13 +77,6 @@ class SessionTestCase(AioHTTPTestCase):
         self.assertIsInstance(self.client.session, Session)
         resp = await self.client.delete("/")
         self.assertEqual(await resp.text, "DELETE")
-
-    @unittest_run_loop
-    async def test_get(self):
-        self.assertIsInstance(self.client.session, Session)
-        resp = await self.client.request("GET", "/")
-        self.assertEqual(await resp.status_code, 200)
-        self.assertEqual(await resp.text, "GET")
 
     @unittest_run_loop
     async def test_invalid_arguments(self):
