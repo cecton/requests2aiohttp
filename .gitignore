@@ -1,0 +1,23 @@
+build
+dist
+*.egg-info
+*.egg/
+*.pyc
+*.swp
+
+.cache
+.tox
+.coverage*
+coverage.xml
+html/*
+
+# Compiled Documentation
+_build/
+README.rst
+
+env/
+venv/
+.idea/
+data/
+
+setup.cfg

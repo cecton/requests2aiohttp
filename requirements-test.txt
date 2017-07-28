@@ -1,0 +1,4 @@
+flake8==3.3.0
+coverage==4.4b1
+pytest-cov==2.4.0
+requests==2.18.2
