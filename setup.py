@@ -4,18 +4,17 @@ import os
 
 from setuptools import setup, find_packages
 
+
 ROOT_DIR = os.path.dirname(__file__)
 SOURCE_DIR = os.path.join(ROOT_DIR)
+
 
 version = None
 exec(open('requests2aiohttp/__init__.py').read())
 
+
 with open('./requirements.txt') as reqs_txt:
     requirements = list(iter(reqs_txt))
-
-
-with open('./requirements-test.txt') as test_reqs_txt:
-    test_requirements = list(iter(test_reqs_txt))
 
 
 setup(
@@ -26,9 +25,7 @@ setup(
     url='https://github.com/cecton/requests2aiohttp',
     packages=find_packages(exclude=["tests.*", "tests"]),
     install_requires=requirements,
-    tests_require=test_requirements,
     zip_safe=False,
-    test_suite='tests',
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Environment :: Other Environment',
