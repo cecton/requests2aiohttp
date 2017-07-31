@@ -3,8 +3,8 @@ import asyncio
 import inspect
 
 
-async def co_identity(x):
-    return x
+async def default_exception_wrapper(exc, response):
+    return exc
 
 
 class Session:
@@ -111,7 +111,7 @@ class Response:
             self._response = await self.context
         return self._response
 
-    def raise_for_status(self, wrapper=co_identity):
+    def raise_for_status(self, wrapper=default_exception_wrapper):
         self._raise_for_status = wrapper
 
     @property
@@ -126,7 +126,7 @@ class Response:
             try:
                 resp.raise_for_status()
             except Exception as exc:
-                raise await self._raise_for_status(exc)
+                raise await self._raise_for_status(exc, resp)
         return await resp.text()
 
     async def json(self):
@@ -135,7 +135,7 @@ class Response:
             try:
                 resp.raise_for_status()
             except Exception as exc:
-                raise await self._raise_for_status(exc)
+                raise await self._raise_for_status(exc, resp)
         return await resp.json()
 
     @property
@@ -145,7 +145,7 @@ class Response:
             try:
                 resp.raise_for_status()
             except Exception as exc:
-                raise await self._raise_for_status(exc)
+                raise await self._raise_for_status(exc, resp)
         return await resp.read()
 
     @property
@@ -155,7 +155,7 @@ class Response:
             try:
                 resp.raise_for_status()
             except Exception as exc:
-                raise await self._raise_for_status(exc)
+                raise await self._raise_for_status(exc, resp)
         return resp
 
     @asyncio.coroutine
