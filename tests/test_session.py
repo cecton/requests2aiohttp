@@ -25,6 +25,8 @@ class _TestClient(aiohttp.test_utils.TestClient):
 
 
 class SessionTestCase(AioHTTPTestCase):
+    http_methods = ["patch", "options", "put", "head", "get", "delete", "post"]
+
     async def get_application(self):
         app = web.Application()
         app.router.add_route('*', '/', lambda x: web.Response(text=x.method))
@@ -85,13 +87,40 @@ class SessionTestCase(AioHTTPTestCase):
             await self.client.get("/", stream=True, hooks=None, verify=False)
 
     @unittest_run_loop
-    async def test_raise_for_status(self):
+    async def test_raise_for_status_text(self):
         self.assertIsInstance(self.client.session, Session)
         resp = await self.client.request("GET", "/error")
+        resp.raise_for_status()
         self.assertEqual(await resp.status_code, 400)
         with self.assertRaises(aiohttp.client_exceptions.ClientResponseError):
-            await resp.raise_for_status()
-        self.assertEqual(await resp.text, "")
+            self.assertEqual(await resp.text, "")
+
+    @unittest_run_loop
+    async def test_raise_for_status_json(self):
+        self.assertIsInstance(self.client.session, Session)
+        resp = await self.client.request("GET", "/error")
+        resp.raise_for_status()
+        self.assertEqual(await resp.status_code, 400)
+        with self.assertRaises(aiohttp.client_exceptions.ClientResponseError):
+            self.assertEqual(await resp.json(), "")
+
+    @unittest_run_loop
+    async def test_raise_for_status_content(self):
+        self.assertIsInstance(self.client.session, Session)
+        resp = await self.client.request("GET", "/error")
+        resp.raise_for_status()
+        self.assertEqual(await resp.status_code, 400)
+        with self.assertRaises(aiohttp.client_exceptions.ClientResponseError):
+            self.assertEqual(await resp.content, "")
+
+    @unittest_run_loop
+    async def test_raise_for_status_raw(self):
+        self.assertIsInstance(self.client.session, Session)
+        resp = await self.client.request("GET", "/error")
+        resp.raise_for_status()
+        self.assertEqual(await resp.status_code, 400)
+        with self.assertRaises(aiohttp.client_exceptions.ClientResponseError):
+            self.assertEqual(await resp.raw, "")
 
     @unittest_run_loop
     async def test_json(self):
@@ -110,3 +139,8 @@ class SessionTestCase(AioHTTPTestCase):
         self.assertIsInstance(self.client.session, Session)
         resp = await self.client.request("GET", "/")
         self.assertIsInstance(await resp.raw, aiohttp.client.ClientResponse)
+
+    def test_attributes(self):
+        x = dir(requests2aiohttp.sessions.Session)
+        y = dir(requests.sessions.Session)
+        self.assertEqual(set(y) - set(x), set(self.http_methods))

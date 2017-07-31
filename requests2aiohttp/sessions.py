@@ -46,6 +46,52 @@ class Session:
         await self.session.close()
         super().close()
 
+    def mount(self, prefix, adapter):
+        pass
+
+    def prepare_request(self, *args, **kwargs):
+        raise RuntimeError("Method not available")  # pragma no cover
+
+    def resolve_redirects(self, *args, **kwargs):
+        raise RuntimeError("Method not available")  # pragma no cover
+
+    def rebuild_auth(self, *args, **kwargs):
+        raise RuntimeError("Method not available")  # pragma no cover
+
+    def rebuild_method(self, *args, **kwargs):
+        raise RuntimeError("Method not available")  # pragma no cover
+
+    def send(self, *args, **kwargs):
+        raise RuntimeError("Method not available")  # pragma no cover
+
+    def merge_environment_settings(self, *args, **kwargs):
+        raise RuntimeError("Method not available")  # pragma no cover
+
+    def rebuild_proxies(self, *args, **kwargs):
+        raise RuntimeError("Method not available")  # pragma no cover
+
+    def get_redirect_target(self, *args, **kwargs):
+        raise RuntimeError("Method not available")  # pragma no cover
+
+    def get_adapter(self, *args, **kwargs):
+        raise RuntimeError("Method not available")  # pragma no cover
+
+    def __enter__(self, *args, **kwargs):
+        raise RuntimeError("Method not available")  # pragma no cover
+
+    def __exit__(self, *args, **kwargs):
+        raise RuntimeError("Method not available")  # pragma no cover
+
+    def __getstate__(self):
+        raise RuntimeError("Method not available")  # pragma no cover
+
+    def __setstate__(self, state):
+        raise RuntimeError("Method not available")  # pragma no cover
+
+    @property
+    def __attrs__(self):
+        raise RuntimeError("Method not available")  # pragma no cover
+
 
 class Response:
     """
@@ -53,6 +99,7 @@ class Response:
     """
     def __init__(self, context):
         self.context = context
+        self._raise_for_status = None
 
     @property
     async def response(self):
@@ -60,9 +107,8 @@ class Response:
             self._response = await self.context
         return self._response
 
-    async def raise_for_status(self):
-        resp = await self.response
-        resp.raise_for_status()
+    def raise_for_status(self, wrapper=lambda x: x):
+        self._raise_for_status = wrapper
 
     @property
     async def status_code(self):
@@ -72,26 +118,41 @@ class Response:
     @property
     async def text(self):
         resp = await self.response
+        if self._raise_for_status:
+            try:
+                resp.raise_for_status()
+            except Exception as exc:
+                raise self._raise_for_status(exc)
         return await resp.text()
 
-    async def _json(self):
+    async def json(self):
         resp = await self.response
+        if self._raise_for_status:
+            try:
+                resp.raise_for_status()
+            except Exception as exc:
+                raise self._raise_for_status(exc)
         return await resp.json()
 
-    def json(self):
-        return asyncio.ensure_future(self._json())
-
-    async def _content(self):
+    @property
+    async def content(self):
         resp = await self.response
+        if self._raise_for_status:
+            try:
+                resp.raise_for_status()
+            except Exception as exc:
+                raise self._raise_for_status(exc)
         return await resp.read()
 
     @property
-    def content(self):
-        return self._content()
-
-    @property
-    def raw(self):
-        return self.response
+    async def raw(self):
+        resp = await self.response
+        if self._raise_for_status:
+            try:
+                resp.raise_for_status()
+            except Exception as exc:
+                raise self._raise_for_status(exc)
+        return resp
 
     @asyncio.coroutine
     def __iter__(self):
