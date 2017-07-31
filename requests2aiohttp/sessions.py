@@ -3,6 +3,10 @@ import asyncio
 import inspect
 
 
+async def co_identity(x):
+    return x
+
+
 class Session:
     """
     This class needs to be inserted just before the class you intend to inherit
@@ -107,7 +111,7 @@ class Response:
             self._response = await self.context
         return self._response
 
-    def raise_for_status(self, wrapper=lambda x: x):
+    def raise_for_status(self, wrapper=co_identity):
         self._raise_for_status = wrapper
 
     @property
@@ -122,7 +126,7 @@ class Response:
             try:
                 resp.raise_for_status()
             except Exception as exc:
-                raise self._raise_for_status(exc)
+                raise await self._raise_for_status(exc)
         return await resp.text()
 
     async def json(self):
@@ -131,7 +135,7 @@ class Response:
             try:
                 resp.raise_for_status()
             except Exception as exc:
-                raise self._raise_for_status(exc)
+                raise await self._raise_for_status(exc)
         return await resp.json()
 
     @property
@@ -141,7 +145,7 @@ class Response:
             try:
                 resp.raise_for_status()
             except Exception as exc:
-                raise self._raise_for_status(exc)
+                raise await self._raise_for_status(exc)
         return await resp.read()
 
     @property
@@ -151,7 +155,7 @@ class Response:
             try:
                 resp.raise_for_status()
             except Exception as exc:
-                raise self._raise_for_status(exc)
+                raise await self._raise_for_status(exc)
         return resp
 
     @asyncio.coroutine
