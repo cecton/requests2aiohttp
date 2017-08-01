@@ -115,9 +115,8 @@ class Response:
         self._raise_for_status = wrapper
 
     @property
-    async def status_code(self):
-        resp = await self.response
-        return resp.status
+    def status_code(self):
+        return StatusCode(self.response)
 
     @property
     async def text(self):
@@ -164,3 +163,30 @@ class Response:
 
     def close(self):
         self.context.close()
+
+
+class StatusCode:
+    """
+    int wrapper that returns a coroutine with the expected result of the
+    boolean expression
+    """
+    def __init__(self, response):
+        self.response = response
+
+    async def __eq__(self, value):
+        return (await self.response).status == value
+
+    async def __ne__(self, value):
+        return (await self.response).status != value
+
+    async def __lt__(self, value):
+        return (await self.response).status < value
+
+    async def __le__(self, value):
+        return (await self.response).status <= value
+
+    async def __gt__(self, value):
+        return (await self.response).status > value
+
+    async def __ge__(self, value):
+        return (await self.response).status >= value

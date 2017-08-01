@@ -54,7 +54,7 @@ class SessionTestCase(AioHTTPTestCase):
     async def test_head(self):
         self.assertIsInstance(self.client.session, Session)
         resp = await self.client.head("/")
-        self.assertEqual(await resp.status_code, 200)
+        self.assertTrue(await (resp.status_code == 200))
 
     @unittest_run_loop
     async def test_post(self):
@@ -91,7 +91,7 @@ class SessionTestCase(AioHTTPTestCase):
         self.assertIsInstance(self.client.session, Session)
         resp = await self.client.request("GET", "/error")
         resp.raise_for_status()
-        self.assertEqual(await resp.status_code, 400)
+        self.assertTrue(await (resp.status_code == 400))
         with self.assertRaises(aiohttp.client_exceptions.ClientResponseError):
             self.assertEqual(await resp.text, "")
 
@@ -100,7 +100,7 @@ class SessionTestCase(AioHTTPTestCase):
         self.assertIsInstance(self.client.session, Session)
         resp = await self.client.request("GET", "/error")
         resp.raise_for_status()
-        self.assertEqual(await resp.status_code, 400)
+        self.assertTrue(await (resp.status_code == 400))
         with self.assertRaises(aiohttp.client_exceptions.ClientResponseError):
             self.assertEqual(await resp.json(), "")
 
@@ -109,7 +109,7 @@ class SessionTestCase(AioHTTPTestCase):
         self.assertIsInstance(self.client.session, Session)
         resp = await self.client.request("GET", "/error")
         resp.raise_for_status()
-        self.assertEqual(await resp.status_code, 400)
+        self.assertTrue(await (resp.status_code == 400))
         with self.assertRaises(aiohttp.client_exceptions.ClientResponseError):
             self.assertEqual(await resp.content, "")
 
@@ -118,7 +118,7 @@ class SessionTestCase(AioHTTPTestCase):
         self.assertIsInstance(self.client.session, Session)
         resp = await self.client.request("GET", "/error")
         resp.raise_for_status()
-        self.assertEqual(await resp.status_code, 400)
+        self.assertTrue(await (resp.status_code == 400))
         with self.assertRaises(aiohttp.client_exceptions.ClientResponseError):
             self.assertEqual(await resp.raw, "")
 
@@ -144,3 +144,57 @@ class SessionTestCase(AioHTTPTestCase):
         x = dir(requests2aiohttp.sessions.Session)
         y = dir(requests.sessions.Session)
         self.assertEqual(set(y) - set(x), set(self.http_methods))
+
+
+class StatusCodeTestCase(AioHTTPTestCase):
+    async def get_application(self):
+        app = web.Application()
+        app.router.add_get(
+            '/{code}',
+            lambda x: web.Response(status=int(x.match_info['code'])))
+        return app
+
+    async def get_client(self, server):
+        return _TestClient(server, loop=self.loop)
+
+    @unittest_run_loop
+    async def test_status_code_equal(self):
+        self.assertIsInstance(self.client.session, Session)
+        resp = await self.client.request("GET", "/200")
+        self.assertTrue(await (resp.status_code == 200))
+        self.assertFalse(await (resp.status_code == 400))
+
+    @unittest_run_loop
+    async def test_status_code_not_equal(self):
+        self.assertIsInstance(self.client.session, Session)
+        resp = await self.client.request("GET", "/200")
+        self.assertFalse(await (resp.status_code != 200))
+        self.assertTrue(await (resp.status_code != 400))
+
+    @unittest_run_loop
+    async def test_status_code_greater_than(self):
+        self.assertIsInstance(self.client.session, Session)
+        resp = await self.client.request("GET", "/200")
+        self.assertTrue(await (resp.status_code > 199))
+        self.assertFalse(await (resp.status_code > 200))
+
+    @unittest_run_loop
+    async def test_status_code_greater_or_equal(self):
+        self.assertIsInstance(self.client.session, Session)
+        resp = await self.client.request("GET", "/200")
+        self.assertTrue(await (resp.status_code >= 200))
+        self.assertFalse(await (resp.status_code >= 201))
+
+    @unittest_run_loop
+    async def test_status_code_lesser_than(self):
+        self.assertIsInstance(self.client.session, Session)
+        resp = await self.client.request("GET", "/200")
+        self.assertFalse(await (resp.status_code < 200))
+        self.assertTrue(await (resp.status_code < 201))
+
+    @unittest_run_loop
+    async def test_status_code_lesser_or_equal(self):
+        self.assertIsInstance(self.client.session, Session)
+        resp = await self.client.request("GET", "/200")
+        self.assertTrue(await (resp.status_code <= 200))
+        self.assertFalse(await (resp.status_code <= 199))
