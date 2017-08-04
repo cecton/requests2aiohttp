@@ -24,10 +24,8 @@ class _TestClient(aiohttp.test_utils.TestClient):
         self._loop = loop
         if cookie_jar is None:
             cookie_jar = aiohttp.CookieJar(unsafe=True, loop=loop)
-        self._session = Session(loop=loop,
-                                cookie_jar=cookie_jar,
-                                version="something",
-                                aio_version=(1, 1),
+        self._session = Session(aio_loop=loop,
+                                aio_cookie_jar=cookie_jar,
                                 **kwargs)
         self._closed = False
         self._responses = []
@@ -46,7 +44,8 @@ class SessionTestCase(AioHTTPTestCase):
         return app
 
     async def get_client(self, server):
-        return _TestClient(server, loop=self.loop)
+        return _TestClient(server, loop=self.loop,
+                           version="something", aio_version=(1, 1))
 
     @unittest_run_loop
     async def test_get(self):
@@ -93,7 +92,7 @@ class SessionTestCase(AioHTTPTestCase):
     @unittest_run_loop
     async def test_invalid_arguments(self):
         self.assertIsInstance(self.client.session, Session)
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(TypeError):
             await self.client.get("/", stream=True, hooks=None, verify=False)
 
     @unittest_run_loop
