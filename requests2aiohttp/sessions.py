@@ -3,6 +3,9 @@ import asyncio
 import inspect
 
 
+_session_init_signature = inspect.signature(aiohttp.ClientSession)
+
+
 async def default_exception_wrapper(exc, response):
     return exc
 
@@ -13,8 +16,11 @@ class Session:
     """
 
     def __init__(self, **kwargs):
-        aiohttp_kwargs, other_kwargs = self._extract_arguments(
-            kwargs, aiohttp.ClientSession.__init__)
+        other_kwargs, aiohttp_kwargs = self._extract_arguments(
+            kwargs, super().__init__)
+        for k in list(aiohttp_kwargs.keys()):
+            if k.startswith('aio_'):
+                aiohttp_kwargs[k[4:]] = aiohttp_kwargs.pop(k)
         self.session = aiohttp.ClientSession(**aiohttp_kwargs)
         super().__init__(**other_kwargs)
 

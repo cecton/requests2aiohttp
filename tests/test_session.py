@@ -1,3 +1,4 @@
+import aiohttp
 import aiohttp.test_utils
 import requests.sessions
 from aiohttp import web
@@ -6,7 +7,14 @@ from aiohttp.test_utils import AioHTTPTestCase, unittest_run_loop
 import requests2aiohttp.sessions
 
 
-class Session(requests2aiohttp.sessions.Session, requests.sessions.Session):
+class RequestSession(requests.sessions.Session):
+    def __init__(self, *, version=None):
+        super().__init__()
+        # NOTE: a conflicting keyword argument with aiohttp
+        self.version = version
+
+
+class Session(requests2aiohttp.sessions.Session, RequestSession):
     pass
 
 
@@ -18,6 +26,8 @@ class _TestClient(aiohttp.test_utils.TestClient):
             cookie_jar = aiohttp.CookieJar(unsafe=True, loop=loop)
         self._session = Session(loop=loop,
                                 cookie_jar=cookie_jar,
+                                version="something",
+                                aio_version=(1, 1),
                                 **kwargs)
         self._closed = False
         self._responses = []
@@ -144,6 +154,12 @@ class SessionTestCase(AioHTTPTestCase):
         x = dir(requests2aiohttp.sessions.Session)
         y = dir(requests.sessions.Session)
         self.assertEqual(set(y) - set(x), set(self.http_methods))
+
+    def test_conflicting_init_arguments(self):
+        self.assertEqual(self.client.session.session.version, (1, 1))
+        self.assertIsNot(self.client.session.session.version,
+                         aiohttp.HttpVersion11)
+        self.assertEqual(self.client.session.version, "something")
 
 
 class StatusCodeTestCase(AioHTTPTestCase):
