@@ -12,6 +12,7 @@ SOURCE_DIR = os.path.join(ROOT_DIR)
 version = None
 exec(open('requests2aiohttp/__init__.py').read())
 
+assert version
 
 with open('./requirements.txt') as reqs_txt:
     requirements = list(iter(reqs_txt))
